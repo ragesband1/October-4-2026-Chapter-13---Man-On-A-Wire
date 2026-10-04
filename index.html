@@ -1,0 +1,2672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Chapter 13 - Man On A Wire</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    overflow:hidden;
+    background:#05070c;
+    color:white;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+#game{
+    position:relative;
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+    background:#111;
+}
+
+canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+}
+
+.panel{
+    background:rgba(7,12,20,.92);
+    border:1px solid #52647c;
+    border-radius:12px;
+    box-shadow:0 10px 40px rgba(0,0,0,.65);
+}
+
+#hud{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+}
+
+#playerPanel{
+    position:absolute;
+    top:15px;
+    left:15px;
+    width:340px;
+    padding:12px;
+}
+
+.gameTitle{
+    font-weight:bold;
+    font-size:17px;
+}
+
+.small{
+    font-size:11px;
+    color:#aebbd0;
+    margin-top:4px;
+}
+
+.bar{
+    height:10px;
+    background:#202938;
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:7px;
+}
+
+#hpBar{
+    height:100%;
+    width:100%;
+    background:#e54b4b;
+}
+
+#xpBar{
+    height:100%;
+    width:0%;
+    background:#8b6cff;
+}
+
+.stats{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:8px;
+    font-size:12px;
+}
+
+.stats span{
+    color:#c8d3e2;
+}
+
+.stats b{
+    color:white;
+}
+
+#questPanel{
+    position:absolute;
+    right:15px;
+    top:15px;
+    width:290px;
+    padding:12px;
+}
+
+#questPanel h3{
+    margin-bottom:7px;
+}
+
+#questText{
+    font-size:12px;
+    line-height:1.5;
+    color:#d6deea;
+}
+
+#controls{
+    position:absolute;
+    left:15px;
+    bottom:15px;
+    width:275px;
+    padding:10px;
+    font-size:11px;
+    line-height:1.6;
+    color:#b9c5d5;
+}
+
+#buttons{
+    position:absolute;
+    right:15px;
+    bottom:15px;
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    max-width:50%;
+    pointer-events:auto;
+}
+
+button{
+    cursor:pointer;
+    color:white;
+    background:#172235;
+    border:1px solid #607088;
+    border-radius:8px;
+    padding:8px 11px;
+}
+
+button:hover{
+    background:#293952;
+}
+
+#message{
+    position:absolute;
+    bottom:90px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:10px 15px;
+    max-width:85%;
+    text-align:center;
+    display:none;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:20px;
+    height:20px;
+    transform:translate(-50%,-50%);
+}
+
+#crosshair:before,
+#crosshair:after{
+    content:"";
+    position:absolute;
+    background:white;
+    opacity:.75;
+}
+
+#crosshair:before{
+    width:2px;
+    height:20px;
+    left:9px;
+}
+
+#crosshair:after{
+    height:2px;
+    width:20px;
+    top:9px;
+}
+
+.modal{
+    position:absolute;
+    inset:0;
+    z-index:30;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:rgba(0,0,0,.45);
+}
+
+.window{
+    width:min(850px,95vw);
+    max-height:90vh;
+    overflow:auto;
+    padding:25px;
+}
+
+.window h1{
+    margin-bottom:8px;
+}
+
+.window h2{
+    margin:15px 0 7px;
+}
+
+.window p{
+    color:#d4dce8;
+    line-height:1.55;
+    margin-bottom:10px;
+}
+
+.story{
+    white-space:pre-wrap;
+    font-size:13px;
+    line-height:1.65;
+    color:#e1e6ed;
+}
+
+.hidden{
+    display:none!important;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:10px;
+}
+
+.card{
+    background:#101925;
+    border:1px solid #35445a;
+    border-radius:9px;
+    padding:12px;
+}
+
+.card h3{
+    font-size:14px;
+    margin-bottom:6px;
+}
+
+.card p{
+    font-size:12px;
+    color:#aebacc;
+}
+
+.card button{
+    margin-top:8px;
+}
+
+#minimap{
+    position:absolute;
+    right:15px;
+    top:145px;
+    width:180px;
+    height:120px;
+    border:2px solid #64748b;
+    border-radius:9px;
+    background:#081018;
+}
+
+#mobile{
+    display:none;
+}
+
+@media(max-width:700px){
+    #playerPanel{
+        width:270px;
+    }
+
+    #questPanel{
+        top:125px;
+        width:235px;
+    }
+
+    #controls{
+        display:none;
+    }
+
+    #buttons{
+        max-width:65%;
+    }
+
+    #minimap{
+        width:130px;
+        height:90px;
+        top:270px;
+    }
+
+    #mobile{
+        display:block;
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+        z-index:10;
+    }
+
+    .touch{
+        position:absolute;
+        width:50px;
+        height:50px;
+        border-radius:50%;
+        pointer-events:auto;
+        opacity:.8;
+    }
+
+    #up{left:70px;bottom:130px}
+    #down{left:70px;bottom:20px}
+    #left{left:15px;bottom:75px}
+    #right{left:125px;bottom:75px}
+    #attack{right:20px;bottom:80px}
+    #interact{right:85px;bottom:20px}
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<canvas id="canvas"></canvas>
+<canvas id="minimap"></canvas>
+
+<div id="hud">
+
+<div id="playerPanel" class="panel">
+    <div class="gameTitle">
+        CHAPTER 13 - MAN ON A WIRE
+    </div>
+
+    <div class="small">
+        Weary • Electrical Engineering
+    </div>
+
+    <div class="bar">
+        <div id="hpBar"></div>
+    </div>
+
+    <div class="stats">
+        <span>HP <b id="hp">100/100</b></span>
+        <span>LV <b id="level">1</b></span>
+        <span>XP <b id="xp">0/100</b></span>
+    </div>
+
+    <div class="stats">
+        <span>Class: <b id="class">Engineer</b></span>
+        <span>Camera: <b id="camera">Third</b></span>
+    </div>
+
+    <div class="bar">
+        <div id="xpBar"></div>
+    </div>
+</div>
+
+
+<div id="questPanel" class="panel">
+    <h3>📜 Quest</h3>
+    <div id="questText">
+        Talk to Benito.
+    </div>
+</div>
+
+
+<div id="message" class="panel"></div>
+
+<div id="crosshair"></div>
+
+
+<div id="controls" class="panel">
+
+<b>CONTROLS</b><br>
+
+W A S D — Move<br>
+Mouse — Look / Camera<br>
+SPACE — Attack<br>
+E — Interact<br>
+F — First / Third Person<br>
+I — Inventory<br>
+K — Skill Tree<br>
+M — Story<br>
+P — Pause<br>
+
+</div>
+
+
+<div id="buttons">
+
+<button onclick="inventory()">🎒 Inventory</button>
+<button onclick="skills()">⭐ Skills</button>
+<button onclick="toggleCamera()">📷 Camera</button>
+<button onclick="story()">📖 Story</button>
+<button onclick="pause()">Ⅱ Pause</button>
+
+</div>
+
+</div>
+
+
+<div id="mobile">
+
+<button class="touch" id="up">▲</button>
+<button class="touch" id="down">▼</button>
+<button class="touch" id="left">◀</button>
+<button class="touch" id="right">▶</button>
+<button class="touch" id="attack">⚡</button>
+<button class="touch" id="interact">E</button>
+
+</div>
+
+
+<!-- MAIN MENU -->
+
+<div id="menu" class="modal">
+
+<div class="window panel">
+
+<h1>Chapter 13 - Man On A Wire</h1>
+
+<p>
+<b>Bedtime Stories</b><br>
+February 14 2020
+</p>
+
+<p>
+<b>From the creations of Harmless Volts And “The Rages Band”</b>
+</p>
+
+<p>
+A fictional action-adventure game based on the supplied story.
+</p>
+
+<button onclick="startGame()">▶ START GAME</button>
+<button onclick="story()">📖 READ STORY</button>
+
+</div>
+</div>
+
+
+<!-- STORY -->
+
+<div id="storyModal" class="modal hidden">
+
+<div class="window panel">
+
+<h1>Chapter 13: Bedtime Stories</h1>
+
+<p>
+February 14 2020
+</p>
+
+<h2>Man On A Wire</h2>
+
+<p>
+From the creations of Harmless Volts And “The Rages Band”
+</p>
+
+<div class="story" id="storyText"></div>
+
+<h2>Moral Lesson</h2>
+
+<div class="story" id="moral"></div>
+
+<br>
+
+<button onclick="closeModal('storyModal')">CLOSE</button>
+
+</div>
+</div>
+
+
+<!-- INVENTORY -->
+
+<div id="inventoryModal" class="modal hidden">
+
+<div class="window panel">
+
+<h1>🎒 Inventory & Equipment</h1>
+
+<div class="grid" id="inventoryList"></div>
+
+<br>
+
+<button onclick="closeModal('inventoryModal')">CLOSE</button>
+
+</div>
+</div>
+
+
+<!-- SKILLS -->
+
+<div id="skillsModal" class="modal hidden">
+
+<div class="window panel">
+
+<h1>⭐ Skill Tree</h1>
+
+<p>
+Skill Points: <b id="skillPoints">0</b>
+</p>
+
+<div class="grid" id="skillList"></div>
+
+<br>
+
+<button onclick="closeModal('skillsModal')">CLOSE</button>
+
+</div>
+</div>
+
+
+<!-- GAME OVER -->
+
+<div id="gameOver" class="modal hidden">
+
+<div class="window panel">
+
+<h1>⚠ MISSION FAILED</h1>
+
+<p>
+Weary was defeated by the fictional hazards.
+</p>
+
+<button onclick="restart()">↻ RESTART</button>
+
+</div>
+</div>
+
+
+<!-- END -->
+
+<div id="ending" class="modal hidden">
+
+<div class="window panel">
+
+<h1>🏁 CHAPTER COMPLETE</h1>
+
+<h2>Man On A Wire</h2>
+
+<p>
+The Chapter 13 story has reached its cemetery ending.
+</p>
+
+<h2>Moral Lesson</h2>
+
+<p>
+If you’re course is Electrical Engineering. Please understand what the boss said in the laboratory. You must understand the risk of not following instructions. Or if you consider to fail making it. Better luck of your life if that’s the time of one chance consequence on your death.
+</p>
+
+<button onclick="restart()">↻ PLAY AGAIN</button>
+
+</div>
+</div>
+
+
+<script>
+
+/* =====================================================
+   CHAPTER 13 - MAN ON A WIRE
+   COMPLETE HTML/CSS/JAVASCRIPT GAME
+   ===================================================== */
+
+
+/* ---------- STORY ---------- */
+
+const FULL_STORY = `Once upon a time there is a man came and he let to know how to connect an open wires using his electric gloves. His name is Weary. And his job is all about electrical engineering. He has a knowledge in step by step process whether the simple and parallel circuit lights has in damage in the house. Then later there is the rescuer came. His name is Benito. He is the professional boss of connecting wires in electrical engineering and he always wear the electric gloves and mask. So that no exposure of dust will enter in your nose and mouth. When fixing the broken wires. Because the symptoms of not following the procedures without mask and electric gloves. Is that it could damage respiratory tract in smoke of wires. And youre electrolytes will been grounded if you don’t wear electric gloves. And later on it will lead you to paralysis. Where you can’t move your muscles contact to contact of the person. Few days later as the job begins. Weary saw the unplugged and broken circuits in the house of Eddix. No one goes to his house because the light bulls are browned-out and the wires broken into two for the simple and the parallel circuits. What Weary do is he didn’t wear mask and electric gloves to fixed the problem for wires. And when Benito saw the case on what Weary doing his job. Benito got nervous and said, Weary! Please don’t do this without using your masks and electric gloves!!. Weary said, Why? What am I supposed to do. Benito said, are you kidding me! I’m a rescuer please follow the procedure. This is only for your safety. Weary said, No! I’m not, I’m just saving Eddix to his light bulbs so he has life with open lights in his house. Then to avoid dark house. Benito said, No! you don’t understand, if you confuse to fix the wires your hands will grounded and the smoke will breath in your respiration. If you failed to do it. There is a chance you are electrified without wearing mask and gloves. And suddenly you’d got paralyzed and even death situation. Then goodbye to your job. Weary said, I don’t care, I care just to make sure I’m doing my job honestly and correctly. As the conversation is done. Weary failed it and looks like after fixing the 2 broken wires. He touched it grounded, electrified and even paralyzed. Then the smoke enters his body. He can’t breathe thoroughly. And his mission is failed to do the jobs. The wires are still broken. And Benito rescue Weary into a hospital. And according to the results. Doctor Inigma explains the sad evidence. He didn’t function his respiratory properly and also didn’t working body and muscles of Weary. Because of the accident happen. Benito thought it’s already the time of death. Doctor Inigma said, I’m so apologize this gonna happen, and for sure he didn’t know wake up the second chance of life. Because the lungs is damaged also due to electrocution of his electrolytes. So the only thing to do is to bury him. One chance is enough to live a final stand thank you. And when the story ends Benito bury Weary in cemetery of “Man On A Wire” due to misunderstanding accident. And brought rest in peace for his broken failures in future.`;
+
+const MORAL = `If you’re course is Electrical Engineering. Please understand what the boss said in the laboratory. You must understand the risk of not following instructions. Or if you consider to fail making it. Better luck of your life if that’s the time of one chance consequence on your death.`;
+
+document.getElementById("storyText").textContent = FULL_STORY;
+document.getElementById("moral").textContent = MORAL;
+
+
+/* ---------- CANVAS ---------- */
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+const mini=document.getElementById("minimap");
+const mctx=mini.getContext("2d");
+
+let W=innerWidth;
+let H=innerHeight;
+
+function resize(){
+
+    W=innerWidth;
+    H=innerHeight;
+
+    canvas.width=W;
+    canvas.height=H;
+
+}
+
+resize();
+addEventListener("resize",resize);
+
+
+/* ---------- GAME STATE ---------- */
+
+let running=false;
+let paused=true;
+let cameraMode="third";
+
+const keys={};
+
+let mouse={
+    down:false,
+    x:0
+};
+
+let messageTimer=0;
+
+
+/* ---------- PLAYER ---------- */
+
+const player={
+
+    name:"Weary",
+
+    x:400,
+    y:400,
+
+    radius:15,
+
+    speed:170,
+
+    angle:0,
+
+    hp:100,
+    maxHp:100,
+
+    level:1,
+    xp:0,
+
+    attack:20,
+    defense:0,
+
+    skillPoints:0,
+
+    class:"Engineer",
+
+    inventory:{
+        "Safety Mask":1,
+        "Electric Gloves":0,
+        "Repair Kit":1,
+        "Med Kit":2,
+        "Copper Token":0
+    },
+
+    skills:{
+        safety:0,
+        focus:0,
+        repair:0,
+        armor:0
+    }
+
+};
+
+
+/* ---------- WORLD ---------- */
+
+const WORLD={
+    width:2200,
+    height:1500
+};
+
+
+/* ---------- BUILDINGS ---------- */
+
+const buildings=[
+
+    {
+        x:200,
+        y:220,
+        w:450,
+        h:300,
+        name:"ENGINEERING LAB",
+        color:"#263e50"
+    },
+
+    {
+        x:900,
+        y:250,
+        w:550,
+        h:400,
+        name:"EDDIX'S HOUSE",
+        color:"#51432d"
+    },
+
+    {
+        x:1650,
+        y:240,
+        w:350,
+        h:300,
+        name:"HOSPITAL",
+        color:"#33414c"
+    },
+
+    {
+        x:1650,
+        y:900,
+        w:400,
+        h:330,
+        name:"CEMETERY",
+        color:"#292a38"
+    }
+
+];
+
+
+/* ---------- NPCs ---------- */
+
+const npcs=[
+
+    {
+        id:"benito",
+        name:"Benito",
+        role:"Rescuer",
+        x:420,
+        y:600,
+        color:"#48d9e8"
+    },
+
+    {
+        id:"eddix",
+        name:"Eddix",
+        role:"Homeowner",
+        x:1100,
+        y:700,
+        color:"#ffd166"
+    },
+
+    {
+        id:"doctor",
+        name:"Doctor Inigma",
+        role:"Doctor",
+        x:1800,
+        y:600,
+        color:"#f1f1f1"
+    },
+
+    {
+        id:"guardian",
+        name:"Cemetery Guardian",
+        role:"Guardian",
+        x:1840,
+        y:1000,
+        color:"#ad7cff"
+    }
+
+];
+
+
+/* ---------- ENEMIES ---------- */
+
+const enemies=[
+
+    {
+        name:"Static Wisp",
+        x:800,
+        y:600,
+        hp:50,
+        maxHp:50,
+        damage:8,
+        speed:50,
+        xp:30,
+        radius:17,
+        color:"#ffe66d",
+        alive:true
+    },
+
+    {
+        name:"Static Wisp",
+        x:1450,
+        y:650,
+        hp:60,
+        maxHp:60,
+        damage:10,
+        speed:55,
+        xp:40,
+        radius:17,
+        color:"#ff9f43",
+        alive:true
+    },
+
+    {
+        name:"Smoke Phantom",
+        x:1530,
+        y:420,
+        hp:90,
+        maxHp:90,
+        damage:12,
+        speed:45,
+        xp:60,
+        radius:20,
+        color:"#9fa8b5",
+        alive:true
+    },
+
+    {
+        name:"THE WIRE GUARDIAN",
+        x:1320,
+        y:950,
+        hp:250,
+        maxHp:250,
+        damage:18,
+        speed:35,
+        xp:200,
+        radius:35,
+        color:"#e04f5f",
+        boss:true,
+        alive:true
+    }
+
+];
+
+
+/* ---------- QUESTS ---------- */
+
+const quests=[
+
+    "Talk to Benito.",
+
+    "Receive the safety equipment from Benito.",
+
+    "Go to Eddix's house.",
+
+    "Defeat the Static Wisps.",
+
+    "Report the situation to Benito.",
+
+    "Visit Doctor Inigma at the hospital.",
+
+    "Go to the cemetery.",
+
+    "Defeat THE WIRE GUARDIAN.",
+
+    "Reach the cemetery marker and complete the chapter."
+
+];
+
+let questIndex=0;
+
+function quest(text){
+
+    document.getElementById("questText").textContent=text;
+
+}
+
+
+/* ---------- UTILITIES ---------- */
+
+function distance(a,b){
+
+    return Math.hypot(
+        a.x-b.x,
+        a.y-b.y
+    );
+
+}
+
+
+function clamp(v,min,max){
+
+    return Math.max(
+        min,
+        Math.min(max,v)
+    );
+
+}
+
+
+function message(text){
+
+    const box=document.getElementById("message");
+
+    box.textContent=text;
+    box.style.display="block";
+
+    messageTimer=4;
+
+}
+
+
+function gainXP(amount){
+
+    amount=Math.round(
+        amount*(1+player.skills.repair*.15)
+    );
+
+    player.xp+=amount;
+
+    while(player.xp>=100){
+
+        player.xp-=100;
+
+        player.level++;
+
+        player.skillPoints++;
+
+        player.maxHp+=10;
+
+        player.hp=player.maxHp;
+
+        player.attack+=3;
+
+        message("LEVEL UP! Skill Point gained.");
+
+    }
+
+    updateHUD();
+
+}
+
+
+/* ---------- HUD ---------- */
+
+function updateHUD(){
+
+    document.getElementById("hp").textContent=
+        Math.max(0,Math.ceil(player.hp))+
+        "/"+
+        player.maxHp;
+
+    document.getElementById("level").textContent=
+        player.level;
+
+    document.getElementById("xp").textContent=
+        player.xp+
+        "/100";
+
+    document.getElementById("class").textContent=
+        player.class;
+
+    document.getElementById("camera").textContent=
+        cameraMode==="third"?
+        "Third":
+        "First";
+
+    document.getElementById("hpBar").style.width=
+        Math.max(
+            0,
+            player.hp/player.maxHp*100
+        )+"%";
+
+    document.getElementById("xpBar").style.width=
+        player.xp+"%";
+
+}
+
+
+/* ---------- START / RESTART ---------- */
+
+function startGame(){
+
+    document.getElementById("menu")
+        .classList.add("hidden");
+
+    running=true;
+    paused=false;
+
+    questIndex=0;
+
+    quest(quests[0]);
+
+    message("Find Benito. Press E near him.");
+
+    requestAnimationFrame(loop);
+
+}
+
+
+function restart(){
+
+    player.x=400;
+    player.y=400;
+
+    player.hp=100;
+    player.maxHp=100;
+
+    player.level=1;
+    player.xp=0;
+
+    player.attack=20;
+    player.defense=0;
+
+    player.skillPoints=0;
+
+    player.inventory={
+        "Safety Mask":1,
+        "Electric Gloves":0,
+        "Repair Kit":1,
+        "Med Kit":2,
+        "Copper Token":0
+    };
+
+    player.skills={
+        safety:0,
+        focus:0,
+        repair:0,
+        armor:0
+    };
+
+    enemies.forEach(e=>{
+
+        e.alive=true;
+        e.hp=e.maxHp;
+
+    });
+
+    questIndex=0;
+
+    document.getElementById("gameOver")
+        .classList.add("hidden");
+
+    document.getElementById("ending")
+        .classList.add("hidden");
+
+    running=true;
+    paused=false;
+
+    quest(quests[0]);
+
+    updateHUD();
+
+    requestAnimationFrame(loop);
+
+}
+
+
+/* ---------- MOVEMENT ---------- */
+
+function movePlayer(dt){
+
+    let dx=0;
+    let dy=0;
+
+    if(keys.w||keys.ArrowUp)dy--;
+    if(keys.s||keys.ArrowDown)dy++;
+    if(keys.a||keys.ArrowLeft)dx--;
+    if(keys.d||keys.ArrowRight)dx++;
+
+    if(dx||dy){
+
+        const len=Math.hypot(dx,dy);
+
+        dx/=len;
+        dy/=len;
+
+        player.x+=dx*player.speed*dt;
+        player.y+=dy*player.speed*dt;
+
+        player.x=clamp(
+            player.x,
+            20,
+            WORLD.width-20
+        );
+
+        player.y=clamp(
+            player.y,
+            20,
+            WORLD.height-20
+        );
+
+        player.angle=Math.atan2(dy,dx);
+
+    }
+
+}
+
+
+/* ---------- COMBAT ---------- */
+
+let attackCooldown=0;
+
+function attack(){
+
+    if(!running||paused||attackCooldown>0)
+        return;
+
+    attackCooldown=.4;
+
+    let target=null;
+    let nearest=90;
+
+    for(const e of enemies){
+
+        if(!e.alive)
+            continue;
+
+        const d=distance(player,e);
+
+        if(d<nearest){
+
+            nearest=d;
+            target=e;
+
+        }
+
+    }
+
+    if(!target){
+
+        message("No enemy in attack range.");
+
+        return;
+
+    }
+
+    let damage=
+        player.attack+
+        player.skills.focus*4;
+
+    target.hp-=damage;
+
+    message(
+        "⚡ "+target.name+
+        " -"+damage+" HP"
+    );
+
+    if(target.hp<=0){
+
+        target.hp=0;
+        target.alive=false;
+
+        gainXP(target.xp);
+
+        player.inventory["Copper Token"]++;
+
+        message(
+            target.name+
+            " defeated! +"+
+            target.xp+
+            " XP"
+        );
+
+        checkCombatQuest();
+
+    }
+
+}
+
+
+function checkCombatQuest(){
+
+    const wisps=enemies.filter(
+        e=>e.name==="Static Wisp"&&e.alive
+    );
+
+    if(
+        questIndex===3 &&
+        wisps.length===0
+    ){
+
+        questIndex=4;
+
+        quest(quests[4]);
+
+    }
+
+    const boss=enemies.find(
+        e=>e.boss
+    );
+
+    if(
+        questIndex===7 &&
+        !boss.alive
+    ){
+
+        questIndex=8;
+
+        quest(quests[8]);
+
+        message(
+            "THE WIRE GUARDIAN defeated!"
+        );
+
+    }
+
+}
+
+
+/* ---------- ENEMY AI ---------- */
+
+function updateEnemies(dt){
+
+    for(const e of enemies){
+
+        if(!e.alive)
+            continue;
+
+        const d=distance(player,e);
+
+        if(d<500){
+
+            const dx=
+                (player.x-e.x)/
+                Math.max(d,1);
+
+            const dy=
+                (player.y-e.y)/
+                Math.max(d,1);
+
+            e.x+=dx*e.speed*dt;
+            e.y+=dy*e.speed*dt;
+
+        }
+
+        if(d<e.radius+player.radius+5){
+
+            e.hitTimer=
+                (e.hitTimer||0)-dt;
+
+            if(e.hitTimer<=0){
+
+                e.hitTimer=1;
+
+                let damage=e.damage;
+
+                damage*=
+                    Math.max(
+                        .25,
+                        1-player.defense
+                    );
+
+                if(player.skills.safety){
+
+                    damage*=
+                        Math.max(
+                            .3,
+                            1-player.skills.safety*.15
+                        );
+
+                }
+
+                player.hp-=damage;
+
+                message(
+                    e.name+
+                    " damaged Weary!"
+                );
+
+                if(player.hp<=0){
+
+                    gameOver();
+
+                }
+
+            }
+
+        }
+
+    }
+
+}
+
+
+/* ---------- NPC INTERACTION ---------- */
+
+function interact(){
+
+    let nearest=null;
+    let dmin=90;
+
+    for(const n of npcs){
+
+        const d=distance(player,n);
+
+        if(d<dmin){
+
+            nearest=n;
+            dmin=d;
+
+        }
+
+    }
+
+    if(!nearest){
+
+        message("No NPC nearby.");
+
+        return;
+
+    }
+
+    if(nearest.id==="benito"){
+
+        message(
+            "Benito: Weary! Please follow the safety procedure."
+        );
+
+        if(
+            player.inventory["Electric Gloves"]===0
+        ){
+
+            player.inventory["Electric Gloves"]=1;
+
+            questIndex=1;
+
+            quest(quests[1]);
+
+            message(
+                "Benito gave you Electric Gloves."
+            );
+
+        }
+
+        else if(questIndex<=1){
+
+            questIndex=2;
+
+            quest(quests[2]);
+
+        }
+
+    }
+
+
+    else if(nearest.id==="eddix"){
+
+        if(questIndex>=2){
+
+            questIndex=3;
+
+            quest(quests[3]);
+
+            message(
+                "Eddix: The house is dark. Static Wisps appeared!"
+            );
+
+        }
+
+    }
+
+
+    else if(nearest.id==="doctor"){
+
+        if(questIndex>=5){
+
+            questIndex=6;
+
+            quest(quests[6]);
+
+            message(
+                "Doctor Inigma: Be careful. Proceed to the cemetery."
+            );
+
+        }
+
+    }
+
+
+    else if(nearest.id==="guardian"){
+
+        const boss=enemies.find(e=>e.boss);
+
+        if(
+            questIndex===8 &&
+            !boss.alive
+        ){
+
+            complete();
+
+        }
+
+        else{
+
+            message(
+                "Guardian: The final battle is not finished."
+            );
+
+        }
+
+    }
+
+}
+
+
+/* ---------- QUEST PROXIMITY ---------- */
+
+function questCheck(){
+
+    if(
+        questIndex===2 &&
+        distance(
+            player,
+            npcs[1]
+        )<120
+    ){
+
+        quest(quests[2]);
+
+    }
+
+
+    if(
+        questIndex===4 &&
+        distance(
+            player,
+            npcs[0]
+        )<100
+    ){
+
+        questIndex=5;
+
+        quest(quests[5]);
+
+        message(
+            "Benito: Go to Doctor Inigma."
+        );
+
+    }
+
+
+    if(
+        questIndex===5 &&
+        distance(
+            player,
+            npcs[2]
+        )<120
+    ){
+
+        questIndex=6;
+
+        quest(quests[6]);
+
+    }
+
+
+    if(
+        questIndex===6 &&
+        distance(
+            player,
+            npcs[3]
+        )<150
+    ){
+
+        questIndex=7;
+
+        quest(quests[7]);
+
+        message(
+            "The Wire Guardian has appeared!"
+        );
+
+    }
+
+
+    if(
+        questIndex===8 &&
+        distance(
+            player,
+            npcs[3]
+        )<80
+    ){
+
+        complete();
+
+    }
+
+}
+
+
+/* ---------- CAMERA ---------- */
+
+function toggleCamera(){
+
+    cameraMode=
+        cameraMode==="third"?
+        "first":
+        "third";
+
+    message(
+        cameraMode==="third"?
+        "Third-Person Camera":
+        "First-Person Camera"
+    );
+
+    updateHUD();
+
+}
+
+
+/* ---------- STORY ---------- */
+
+function story(){
+
+    paused=true;
+
+    document.getElementById(
+        "storyModal"
+    ).classList.remove("hidden");
+
+}
+
+
+function closeModal(id){
+
+    document.getElementById(id)
+        .classList.add("hidden");
+
+    paused=false;
+
+    if(running)
+        requestAnimationFrame(loop);
+
+}
+
+
+/* ---------- INVENTORY ---------- */
+
+function inventory(){
+
+    paused=true;
+
+    const list=
+        document.getElementById(
+            "inventoryList"
+        );
+
+    list.innerHTML="";
+
+    for(
+        const [name,count]
+        of Object.entries(player.inventory)
+    ){
+
+        const card=
+            document.createElement("div");
+
+        card.className="card";
+
+        card.innerHTML=
+            "<h3>"+name+"</h3>"+
+            "<p>Quantity: "+count+"</p>";
+
+        if(name==="Med Kit"){
+
+            const button=
+                document.createElement("button");
+
+            button.textContent=
+                "Use Med Kit";
+
+            button.onclick=()=>{
+
+                if(
+                    player.inventory["Med Kit"]>0 &&
+                    player.hp<player.maxHp
+                ){
+
+                    player.inventory["Med Kit"]--;
+
+                    player.hp=
+                        Math.min(
+                            player.maxHp,
+                            player.hp+35
+                        );
+
+                    inventory();
+
+                    updateHUD();
+
+                }
+
+            };
+
+            card.appendChild(button);
+
+        }
+
+        list.appendChild(card);
+
+    }
+
+    document.getElementById(
+        "inventoryModal"
+    ).classList.remove("hidden");
+
+}
+
+
+/* ---------- SKILLS ---------- */
+
+const skillInfo=[
+
+    [
+        "safety",
+        "Safety Training",
+        "Reduces fictional hazard damage."
+    ],
+
+    [
+        "focus",
+        "Combat Focus",
+        "Increases attack damage."
+    ],
+
+    [
+        "repair",
+        "Repair Mastery",
+        "Increases XP earned."
+    ],
+
+    [
+        "armor",
+        "Protective Gear",
+        "Increases maximum HP."
+    ]
+
+];
+
+
+function skills(){
+
+    paused=true;
+
+    const list=
+        document.getElementById(
+            "skillList"
+        );
+
+    list.innerHTML="";
+
+    document.getElementById(
+        "skillPoints"
+    ).textContent=
+        player.skillPoints;
+
+    skillInfo.forEach(info=>{
+
+        const id=info[0];
+        const name=info[1];
+        const desc=info[2];
+
+        const card=
+            document.createElement("div");
+
+        card.className="card";
+
+        card.innerHTML=
+            "<h3>"+
+            name+
+            " ("+
+            player.skills[id]+
+            "/3)</h3>"+
+            "<p>"+
+            desc+
+            "</p>";
+
+        const b=
+            document.createElement("button");
+
+        b.textContent=
+            player.skillPoints>0 &&
+            player.skills[id]<3?
+            "UPGRADE":
+            "LOCKED";
+
+        b.disabled=
+            !(
+                player.skillPoints>0 &&
+                player.skills[id]<3
+            );
+
+        b.onclick=()=>{
+
+            if(
+                player.skillPoints<=0 ||
+                player.skills[id]>=3
+            )
+                return;
+
+            player.skillPoints--;
+
+            player.skills[id]++;
+
+            if(id==="focus")
+                player.attack+=5;
+
+            if(id==="safety")
+                player.defense+=.1;
+
+            if(id==="armor"){
+
+                player.maxHp+=15;
+                player.hp+=15;
+
+            }
+
+            skills();
+
+            updateHUD();
+
+        };
+
+        card.appendChild(b);
+
+        list.appendChild(card);
+
+    });
+
+    document.getElementById(
+        "skillsModal"
+    ).classList.remove("hidden");
+
+}
+
+
+/* ---------- PAUSE ---------- */
+
+function pause(){
+
+    if(!running)
+        return;
+
+    paused=!paused;
+
+    message(
+        paused?
+        "GAME PAUSED":
+        "GAME RESUMED"
+    );
+
+    if(!paused)
+        requestAnimationFrame(loop);
+
+}
+
+
+/* ---------- GAME OVER ---------- */
+
+function gameOver(){
+
+    player.hp=0;
+
+    running=false;
+    paused=true;
+
+    document.getElementById(
+        "gameOver"
+    ).classList.remove("hidden");
+
+    updateHUD();
+
+}
+
+
+/* ---------- ENDING ---------- */
+
+function complete(){
+
+    running=false;
+    paused=true;
+
+    document.getElementById(
+        "ending"
+    ).classList.remove("hidden");
+
+}
+
+
+/* ---------- DRAW WORLD ---------- */
+
+function screenX(x){
+
+    return W/2+
+        (x-player.x);
+
+}
+
+
+function screenY(y){
+
+    return H/2+
+        (y-player.y);
+
+}
+
+
+function drawWorld(){
+
+    ctx.clearRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+
+    /* sky */
+
+    const gradient=
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            H
+        );
+
+    gradient.addColorStop(
+        0,
+        "#172943"
+    );
+
+    gradient.addColorStop(
+        .5,
+        "#111b29"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#060a10"
+    );
+
+    ctx.fillStyle=gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+
+    /* world ground */
+
+    ctx.fillStyle="#10191b";
+
+    ctx.fillRect(
+        screenX(0),
+        screenY(0),
+        WORLD.width,
+        WORLD.height
+    );
+
+
+    /* grid */
+
+    ctx.strokeStyle="#192829";
+    ctx.lineWidth=1;
+
+    for(
+        let x=0;
+        x<WORLD.width;
+        x+=80
+    ){
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screenX(x),
+            screenY(0)
+        );
+
+        ctx.lineTo(
+            screenX(x),
+            screenY(WORLD.height)
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    for(
+        let y=0;
+        y<WORLD.height;
+        y+=80
+    ){
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screenX(0),
+            screenY(y)
+        );
+
+        ctx.lineTo(
+            screenX(WORLD.width),
+            screenY(y)
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    /* roads */
+
+    ctx.fillStyle="#263238";
+
+    ctx.fillRect(
+        screenX(0),
+        screenY(550),
+        WORLD.width,
+        100
+    );
+
+    ctx.fillRect(
+        screenX(720),
+        screenY(0),
+        100,
+        WORLD.height
+    );
+
+    ctx.fillRect(
+        screenX(1500),
+        screenY(0),
+        100,
+        WORLD.height
+    );
+
+
+    /* buildings */
+
+    buildings.forEach(b=>{
+
+        const x=screenX(b.x);
+        const y=screenY(b.y);
+
+        ctx.fillStyle=b.color;
+
+        ctx.fillRect(
+            x,
+            y,
+            b.w,
+            b.h
+        );
+
+        ctx.strokeStyle="#8291a4";
+
+        ctx.strokeRect(
+            x,
+            y,
+            b.w,
+            b.h
+        );
+
+        ctx.fillStyle="#ffffff";
+
+        ctx.font="bold 14px Arial";
+
+        ctx.fillText(
+            b.name,
+            x+12,
+            y+25
+        );
+
+        /* windows */
+
+        ctx.fillStyle="#73c8d8";
+
+        for(
+            let xx=x+30;
+            xx<x+b.w-25;
+            xx+=70
+        ){
+
+            ctx.fillRect(
+                xx,
+                y+55,
+                35,
+                38
+            );
+
+        }
+
+    });
+
+
+    /* broken wire visual zone */
+
+    const zx=screenX(900);
+    const zy=screenY(650);
+
+    ctx.fillStyle="rgba(255,193,7,.08)";
+
+    ctx.fillRect(
+        zx,
+        zy,
+        550,
+        180
+    );
+
+    ctx.strokeStyle="#e4b13e";
+
+    ctx.setLineDash([
+        10,
+        8
+    ]);
+
+    ctx.strokeRect(
+        zx,
+        zy,
+        550,
+        180
+    );
+
+    ctx.setLineDash([]);
+
+    ctx.fillStyle="#ffc107";
+
+    ctx.font="12px Arial";
+
+    ctx.fillText(
+        "FICTIONAL HAZARD ZONE",
+        zx+10,
+        zy+20
+    );
+
+
+    /* overhead wires */
+
+    ctx.strokeStyle="#56616d";
+
+    ctx.lineWidth=4;
+
+    for(
+        let y=330;
+        y<=410;
+        y+=40
+    ){
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screenX(820),
+            screenY(y)
+        );
+
+        ctx.lineTo(
+            screenX(1550),
+            screenY(y)
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    /* cemetery graves */
+
+    for(
+        let x=1690;
+        x<2040;
+        x+=55
+    ){
+
+        for(
+            let y=960;
+            y<1200;
+            y+=65
+        ){
+
+            ctx.fillStyle="#777f8c";
+
+            ctx.fillRect(
+                screenX(x),
+                screenY(y),
+                25,
+                35
+            );
+
+        }
+
+    }
+
+}
+
+
+/* ---------- DRAW NPCS ---------- */
+
+function drawNPCs(){
+
+    npcs.forEach(n=>{
+
+        const x=screenX(n.x);
+        const y=screenY(n.y);
+
+        ctx.fillStyle=n.color;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            18,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+        ctx.strokeStyle="white";
+
+        ctx.stroke();
+
+        ctx.fillStyle="white";
+
+        ctx.font="bold 11px Arial";
+
+        ctx.textAlign="center";
+
+        ctx.fillText(
+            n.name,
+            x,
+            y-27
+        );
+
+        ctx.textAlign="left";
+
+    });
+
+}
+
+
+/* ---------- DRAW ENEMIES ---------- */
+
+function drawEnemies(){
+
+    enemies.forEach(e=>{
+
+        if(!e.alive)
+            return;
+
+        const x=screenX(e.x);
+        const y=screenY(e.y);
+
+        ctx.fillStyle=e.color;
+
+        if(e.boss){
+
+            ctx.beginPath();
+
+            for(
+                let i=0;
+                i<10;
+                i++
+            ){
+
+                const a=
+                    i*Math.PI/5;
+
+                const r=
+                    i%2?
+                    e.radius*.65:
+                    e.radius;
+
+                const px=
+                    x+Math.cos(a)*r;
+
+                const py=
+                    y+Math.sin(a)*r;
+
+                if(i===0)
+                    ctx.moveTo(px,py);
+                else
+                    ctx.lineTo(px,py);
+
+            }
+
+            ctx.closePath();
+
+            ctx.fill();
+
+        }
+
+        else{
+
+            ctx.beginPath();
+
+            ctx.arc(
+                x,
+                y,
+                e.radius,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+        }
+
+
+        /* enemy health */
+
+        ctx.fillStyle="#222";
+
+        ctx.fillRect(
+            x-e.radius,
+            y-e.radius-12,
+            e.radius*2,
+            5
+        );
+
+        ctx.fillStyle="#ef5350";
+
+        ctx.fillRect(
+            x-e.radius,
+            y-e.radius-12,
+            e.radius*2*
+            (e.hp/e.maxHp),
+            5
+        );
+
+
+        ctx.fillStyle="white";
+
+        ctx.font="10px Arial";
+
+        ctx.textAlign="center";
+
+        ctx.fillText(
+            e.name,
+            x,
+            y+e.radius+14
+        );
+
+        ctx.textAlign="left";
+
+    });
+
+}
+
+
+/* ---------- DRAW PLAYER ---------- */
+
+function drawPlayer(){
+
+    if(cameraMode==="first"){
+
+        /* first-person hands */
+
+        ctx.fillStyle="#4fc3f7";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            W*.42,
+            H-35,
+            30,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+        ctx.beginPath();
+
+        ctx.arc(
+            W*.58,
+            H-35,
+            30,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+        return;
+
+    }
+
+
+    const x=W/2;
+    const y=H/2;
+
+    ctx.save();
+
+    ctx.translate(
+        x,
+        y
+    );
+
+    ctx.rotate(
+        player.angle
+    );
+
+    ctx.fillStyle="#4fc3f7";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        player.radius,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle="white";
+
+    ctx.fillRect(
+        8,
+        -3,
+        15,
+        6
+    );
+
+    ctx.restore();
+
+}
+
+
+/* ---------- MINI MAP ---------- */
+
+function drawMiniMap(){
+
+    const mw=mini.width;
+    const mh=mini.height;
+
+    mctx.clearRect(
+        0,
+        0,
+        mw,
+        mh
+    );
+
+    mctx.fillStyle="#081018";
+
+    mctx.fillRect(
+        0,
+        0,
+        mw,
+        mh
+    );
+
+    const sx=mw/WORLD.width;
+    const sy=mh/WORLD.height;
+
+    buildings.forEach(b=>{
+
+        mctx.fillStyle="#3c5267";
+
+        mctx.fillRect(
+            b.x*sx,
+            b.y*sy,
+            b.w*sx,
+            b.h*sy
+        );
+
+    });
+
+
+    npcs.forEach(n=>{
+
+        mctx.fillStyle="#48d9e8";
+
+        mctx.fillRect(
+            n.x*sx-2,
+            n.y*sy-2,
+            5,
+            5
+        );
+
+    });
+
+
+    enemies.forEach(e=>{
+
+        if(!e.alive)
+            return;
+
+        mctx.fillStyle=
+            e.boss?
+            "#ff3f4f":
+            "#ffb52e";
+
+        mctx.fillRect(
+            e.x*sx-2,
+            e.y*sy-2,
+            5,
+            5
+        );
+
+    });
+
+
+    mctx.fillStyle="white";
+
+    mctx.beginPath();
+
+    mctx.arc(
+        player.x*sx,
+        player.y*sy,
+        4,
+        0,
+        Math.PI*2
+    );
+
+    mctx.fill();
+
+}
+
+
+/* ---------- EFFECTS ---------- */
+
+function effects(){
+
+    if(player.hp<30){
+
+        ctx.strokeStyle=
+            "rgba(255,30,30,.55)";
+
+        ctx.lineWidth=12;
+
+        ctx.strokeRect(
+            6,
+            6,
+            W-12,
+            H-12
+        );
+
+    }
+
+}
+
+
+/* ---------- MAIN LOOP ---------- */
+
+let lastTime=performance.now();
+
+function loop(time){
+
+    if(!running||paused)
+        return;
+
+    const dt=
+        Math.min(
+            .033,
+            (time-lastTime)/1000
+        );
+
+    lastTime=time;
+
+    attackCooldown=
+        Math.max(
+            0,
+            attackCooldown-dt
+        );
+
+    movePlayer(dt);
+
+    updateEnemies(dt);
+
+    questCheck();
+
+    drawWorld();
+
+    drawNPCs();
+
+    drawEnemies();
+
+    drawPlayer();
+
+    drawMiniMap();
+
+    effects();
+
+    if(messageTimer>0){
+
+        messageTimer-=dt;
+
+        if(messageTimer<=0){
+
+            document.getElementById(
+                "message"
+            ).style.display="none";
+
+        }
+
+    }
+
+    updateHUD();
+
+    requestAnimationFrame(loop);
+
+}
+
+
+/* ---------- KEYBOARD ---------- */
+
+addEventListener(
+    "keydown",
+    e=>{
+
+        keys[e.key]=true;
+
+        keys[e.key.toLowerCase()]=true;
+
+
+        if(e.key===" "){
+
+            e.preventDefault();
+
+            attack();
+
+        }
+
+
+        if(e.key.toLowerCase()==="e")
+            interact();
+
+
+        if(e.key.toLowerCase()==="f")
+            toggleCamera();
+
+
+        if(e.key.toLowerCase()==="i")
+            inventory();
+
+
+        if(e.key.toLowerCase()==="k")
+            skills();
+
+
+        if(e.key.toLowerCase()==="m")
+            story();
+
+
+        if(e.key.toLowerCase()==="p")
+            pause();
+
+    }
+);
+
+
+addEventListener(
+    "keyup",
+    e=>{
+
+        keys[e.key]=false;
+
+        keys[e.key.toLowerCase()]=false;
+
+    }
+);
+
+
+/* ---------- MOUSE ---------- */
+
+canvas.addEventListener(
+    "mousedown",
+    ()=>{
+        mouse.down=true;
+        attack();
+    }
+);
+
+addEventListener(
+    "mouseup",
+    ()=>{
+        mouse.down=false;
+    }
+);
+
+addEventListener(
+    "mousemove",
+    e=>{
+
+        if(
+            cameraMode==="third" &&
+            document.pointerLockElement===canvas
+        ){
+
+            player.angle+=
+                e.movementX*.003;
+
+        }
+
+    }
+);
+
+canvas.addEventListener(
+    "click",
+    ()=>{
+        canvas.requestPointerLock?.();
+    }
+);
+
+
+/* ---------- MOBILE ---------- */
+
+function hold(id,key){
+
+    const b=
+        document.getElementById(id);
+
+    b.addEventListener(
+        "touchstart",
+        e=>{
+            e.preventDefault();
+            keys[key]=true;
+        },
+        {passive:false}
+    );
+
+    b.addEventListener(
+        "touchend",
+        e=>{
+            e.preventDefault();
+            keys[key]=false;
+        },
+        {passive:false}
+    );
+
+}
+
+
+hold("up","w");
+hold("down","s");
+hold("left","a");
+hold("right","d");
+
+
+document.getElementById(
+    "attack"
+).addEventListener(
+    "touchstart",
+    e=>{
+        e.preventDefault();
+        attack();
+    },
+    {passive:false}
+);
+
+
+document.getElementById(
+    "interact"
+).addEventListener(
+    "touchstart",
+    e=>{
+        e.preventDefault();
+        interact();
+    },
+    {passive:false}
+);
+
+
+/* ---------- INITIALIZE ---------- */
+
+updateHUD();
+
+quest(
+    quests[0]
+);
+
+</script>
+
+</body>
+</html>
